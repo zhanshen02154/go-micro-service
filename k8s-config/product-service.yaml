@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata: 
+  name: product-service
+  namespace: dev
+  labels: 
+    srv: product-service
+spec:
+  selector:
+    app: product-service
+  ports:
+  - name: grpc
+    port: 9000        # Service对外暴露的端口
+    targetPort: 9000  # 指向Pod内容器端口
+    protocol: TCP     # 必须明确指定为TCP
+  type: ClusterIP     # 适用于集群内部服务间调用
