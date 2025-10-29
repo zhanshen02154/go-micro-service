@@ -2,15 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata: 
   labels: 
-    app: product-service
-  name: product-service
+    app: order-service
+  name: order-service
   namespace: dev
 spec: 
   replicas: 2
   revisionHistoryLimit: 10
   selector: 
     matchLabels: 
-      app: product-service
+      app: order-service
   strategy: 
     type: RollingUpdate
     rollingUpdate:
@@ -19,22 +19,22 @@ spec:
   template: 
     metadata: 
       labels: 
-        app: product-service
+        app: order-service
     spec: 
       restartPolicy: Always
       affinity: 
         podAntiAffinity: 
           requiredDuringSchedulingIgnoredDuringExecution:                
-          - labelSelector:
+          - labelSelector: 
               matchExpressions: 
-              - key: app
-                operator: In 
+              - key: app 
+                operator: In
                 values: 
-                - "product-service"
+                - "order-service"
             topologyKey: kubernetes.io/hostname
       containers: 
-        - name: product-container
-          image: 192.168.0.62/microservice/product:dev-f1b4016e
+        - name: order-container
+          image: 192.168.0.62/microservice/order:dev-b06fd015
           imagePullPolicy: IfNotPresent
           ports: 
             - name: http
