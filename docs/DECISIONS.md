@@ -1,7 +1,27 @@
 # 微服务架构演进实践决策记录
 
-## 决策记录：商品服务连接Consul加载K/V
+## 决策记录：Jenkins部署服务到K8S
+### 日期
+2025年10月27日
+### 状态
+已采纳
+### 背景
+Jenkins安装了2个K8S插件分别是Kubernetes和Kubernetes CLI，Kubernetes需要Pod模板较为复杂。
+### 初步方案
+使用Kubernetes插件在K8S集群上创建代理Pod部署，编写Pod模板。
+#### 优点
+- 直接使用插件集成到K8S完成部署。
+#### 缺点
+- 编写Pod模板较为复杂。
+- 运行环境服务器CPU和内存资源已被划分，没有足够的空间运行Jenkins的代理Pod。
+### 最终方案
+放弃Kubernetes插件，改用Kubernetes CLI，结合kubeconfig和kubectl set image deployment实现部署，同时用rollout status监控部署状态，失败则回滚到最近一个reversion。
+#### 采纳理由
+- 直接使用kubectl命令，操作简单，不用在K8S集群运行代理类，节省服务器资源。
 
+---
+
+## 决策记录：商品服务连接Consul加载K/V
 ### 日期
 2025年10月23日
 
@@ -28,6 +48,7 @@
 
 #### 后果
 - 构建镜像未携带参数或参数值错误将导致配置读取失败终止运行。
+- 在部署阶段会出现数据暴露问题。
 
 ---
 
