@@ -9,17 +9,6 @@ apisix:
     limits: 
       cpu: "1000m"
       memory: "800Mi"
-
-gateway: 
-  type: NodePort
-  replicaCount: 2
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-    limits: 
-      cpu: "1000m"
-      memory: "1Gi"
   affinity: 
     podAntiAffinity: 
       preferredDuringSchedulingIgnoredDuringExecution: 
@@ -32,6 +21,17 @@ gateway:
               values: 
               - apisix
           topologyKey: "kubernetes.io/hostname"
+
+gateway: 
+  type: NodePort
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits: 
+      cpu: "1000m"
+      memory: "1Gi"
 
 etcd: 
   enabled: false
@@ -58,8 +58,8 @@ ingress-controller:
 admin:
   enabled: true
   credentials: 
-    admin: "XpSaLIBcjZq7HagLqeWsjYvH"
-    viewer: "zN59sha5XSGasFV0bH97IbEQ" 
+    admin: "<>"
+    viewer: "<>" 
 
 discovery: 
   enabled: true
@@ -67,7 +67,7 @@ discovery:
     consul: 
       enabled: true
       servers: 
-        - "http://192.168.0.62:8500"
+        - "<consul hosts>"
       timeout: 
         connect: 1000
         send: 2000
