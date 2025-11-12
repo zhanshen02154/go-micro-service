@@ -23,6 +23,9 @@ options:
       - Type
       - Scope
       - Subject
+  issues:
+    prefix:
+      - "#"
   notes:
     keywords:
       - BREAKING CHANGE
