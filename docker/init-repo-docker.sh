@@ -273,6 +273,8 @@ EOF
 
 systemctl daemon-reload && systemctl start docker && systemctl start containerd
 
+swapoff -a
+
 cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
