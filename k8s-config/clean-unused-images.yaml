@@ -1,0 +1,81 @@
+# 清理未使用的镜像
+# 1. 防止任务重叠；确保每个节点只运行一个Job（反亲和性）；使用busybox镜像里的crictl rmi --prune完成清理
+# 2. 资源开销：CPU： 100m-200m，内存：20M-30M
+# 3. 2小时执行一次
+# 4. 挂载containerd.sock
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clean-unused-images
+  namespace: kube-system
+spec:
+  schedule: "0 */3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      parallelism: 2
+      completions: 2
+      ttlSecondsAfterFinished: 10
+      template:
+        metadata: 
+          labels: 
+            app: clean-unused-images
+        spec:
+          hostPID: true
+          restartPolicy: OnFailure
+          containers:
+          - name: cleaner
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            securityContext: 
+              runAsGroup: 994
+              runAsUser: 0
+              capabilities: 
+                add: ["DAC_OVERRIDE", "FOWNER"]
+            resources: 
+              requests: 
+                cpu: 100m
+                memory: 20Mi
+              limits: 
+                cpu: 200m
+                memory: 50Mi
+            command: ["/bin/sh", "-c"]
+            args: 
+              - "/usr/bin/crictl rmi --prune"
+            volumeMounts: 
+            - name: containerd-sock
+              mountPath: /var/run/containerd/containerd.sock
+            - name: crictl-bin
+              mountPath: /usr/bin/crictl
+            - name: dockershim-sock
+              mountPath: /var/run/dockershim.sock
+            - name: crictl-config
+              mountPath: /etc/crictl.yaml
+              subPath: crictl.yaml
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+          volumes: 
+          - name: containerd-sock
+            hostPath: 
+              path: /var/run/containerd/containerd.sock
+              type: Socket
+          - name: crictl-bin
+            hostPath: 
+              path: /usr/bin/crictl
+              type: File
+          - name: dockershim-sock
+            hostPath: 
+              path: /var/run/dockershim.sock
+              type: Socket
+          - name: crictl-config
+            configMap: 
+              name: crictl-config
+          - name: localtime
+            hostPath: 
+              path: /etc/localtime
+              type: File
+
