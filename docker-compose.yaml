@@ -1,0 +1,18 @@
+version: "3.3"
+services: 
+    dtm: 
+        image: yedf/dtm:1.19
+        container_name: dtm
+        # command: ./dtm -c config.yaml
+        entrypoint: ["/app/dtm/dtm", "-c", "/app/dtm/config.yaml"]
+        privileged: true
+        volumes:
+            - './dtm/config.yaml:/app/dtm/config.yaml'
+        ports:
+            - '36789:36789'
+            - '36790:36790'
+        networks:
+            - 'microservice'
+networks:
+    microservice:
+        external: true
