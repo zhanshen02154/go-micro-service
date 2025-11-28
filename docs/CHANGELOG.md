@@ -1,6 +1,14 @@
 
+<a name="v2.0.0"></a>
+## [v2.0.0](https://github.com/zhanshen02154/go-micro-service/compare/v1.0.0...v2.0.0) (2025-11-27)
+
+### Features
+
+* 新增DTM组件配置
+
+
 <a name="v1.0.0"></a>
-## v1.0.0 (2025-11-17)
+## v1.0.0 (2025-11-13)
 
 ### Bug Fixes
 
