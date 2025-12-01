@@ -96,9 +96,9 @@ kubectl apply -f <filename>
 ### 部署kafka
 - 在基础设施服务器节点1和基础设施服务器节点2上传kafka，并创建logs目录，执行：sudo chown -R kafka:kafka /path/to/kafka
 - 两台基础设施服务器执行sudo yum install -y java-1.8.0-openjdk
-- 进入kafka目录执行：chmod +x -R kafka:kafka bin/*.sh
+- 进入kafka目录执行：chmod +x -R kafka:kafka bin/*.sh。
 - 根据java安装目录确定JAVA_HOME，更改install.sh里的“JAVA_HOME=”所在的行。
-- 执行install.sh
+- 执行install.sh。
 - 进入logs目录查看meta.properties里面有集群的UUID将其复制出来。
 - 到另一个节点的kafka目录里执行bin/kafka-storage.sh format -t $SERVERUUID -c config/kraft/server.properties（$SERVERUUID就是基础设施服务器节点1获得的集群UUID）。
 
