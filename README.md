@@ -39,19 +39,19 @@
 
 ## 技术选型
 
-| 技术         | 版本      | 用途                      |
-|------------|---------|-------------------------|
-| kubernetes | 1.23.1  | 容器编排                    |
-| docker     | 20.10.7 | 容器运行                    |
-| jenkins    | 2.222.4 | CI/CD                   |
-| MySQL      | 5.7.26  | 数据库                     |
-| Apisix     | 3.4.1   | API网关                   | 
-| harbor     | 1.8.6   | docker私有仓库              | 
-| golang     | 1.20.10 | 各服务开发语言                 | 
-| Consul     | 1.7.3   | 服务注册/发现                 | 
-| ETCD       | 3.5.7   | 服务注册/发现/数据存储（仅用于Apisix） | 
-| Go-micro   | 2.9.1   | 各服务开发框架                 | 
-| Github     | -       | 代码托管平台                  | 
+| 技术         | 版本      | 用途                          |
+|------------|---------|-----------------------------|
+| kubernetes | 1.23.1  | 容器编排                        |
+| docker     | 20.10.7 | 容器运行                        |
+| jenkins    | 2.346.1 | CI/CD                       |
+| MySQL      | 5.7.26  | 数据库                         |
+| Apisix     | 3.4.1   | API网关                       | 
+| harbor     | 1.8.6   | docker私有仓库                  | 
+| golang     | 1.20.10 | 各服务开发语言                     | 
+| Consul     | 1.7.3   | 服务注册/发现                     | 
+| ETCD       | 3.5.7   | 服务注册/发现/数据存储（用于Apisix、分布式锁） | 
+| Go-micro   | 4.11.0  | 各服务开发框架                     | 
+| Github     | -       | 代码托管平台                      | 
 
 ## 服务器配置
 | 配置              | 数量 | 用途                                               |
@@ -92,6 +92,15 @@ kubectl apply -f <filename>
 ### 服务器运行环境
 - 安装kubeadm、kubelet、kubectl
 - 设置kubelet垃圾回收机制
+
+### 部署kafka
+- 在基础设施服务器节点1和基础设施服务器节点2上传kafka，并创建logs目录，执行：sudo chown -R kafka:kafka /path/to/kafka
+- 两台基础设施服务器执行sudo yum install -y java-1.8.0-openjdk
+- 进入kafka目录执行：chmod +x -R kafka:kafka bin/*.sh。
+- 根据java安装目录确定JAVA_HOME，更改install.sh里的“JAVA_HOME=”所在的行。
+- 执行install.sh。
+- 进入logs目录查看meta.properties里面有集群的UUID将其复制出来。
+- 到另一个节点的kafka目录里执行bin/kafka-storage.sh format -t $SERVERUUID -c config/kraft/server.properties（$SERVERUUID就是基础设施服务器节点1获得的集群UUID）。
 
 ### 注意事项
 - GitHub API不再支持用账号密码认证，账号密码凭证用Personal Access Token作为密码。
