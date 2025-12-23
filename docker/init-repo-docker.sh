@@ -175,6 +175,8 @@ version = 2
           endpoint = ["https://hub.rat.dev", "https://docker.m.daocloud.io/", "https://huecker.io/"]
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.k8s.io"]
           endpoint=["https://hub.rat.dev", "https://docker.m.daocloud.io/", "https://huecker.io/"]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."cr.fluentbit.io"]
+          endpoint=["https://hub.rat.dev", "https://docker.m.daocloud.io/", "https://huecker.io/"]
 
     [plugins."io.containerd.grpc.v1.cri".x509_key_pair_streaming]
       tls_cert_file = ""
@@ -275,7 +277,7 @@ systemctl daemon-reload && systemctl start docker && systemctl start containerd
 
 swapoff -a
 
-cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+sudo cat > /etc/yum.repos.d/kubernetes.repo <<EOF
 [kubernetes]
 name=Kubernetes
 baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
