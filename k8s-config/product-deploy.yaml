@@ -34,9 +34,17 @@ spec:
                   values: 
                   - "product-service"
               topologyKey: kubernetes.io/hostname
+        nodeAffinity: 
+          requiredDuringSchedulingIgnoredDuringExecution: 
+            nodeSelectorTerms: 
+            - matchExpressions: 
+              - key: node-role.kubernetes.io/infrastructure
+                operator: NotIn
+                values: 
+                - "k8s-node3"
       containers: 
         - name: product-container
-          image: 192.168.0.62/microservice/product:dev-f1b4016e
+          image: 192.168.0.62/microservice/product:dev-b368fae5
           imagePullPolicy: IfNotPresent
           ports: 
             - name: http

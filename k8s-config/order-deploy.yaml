@@ -34,6 +34,14 @@ spec:
                   values: 
                   - "order-service"
               topologyKey: kubernetes.io/hostname
+        nodeAffinity: 
+          requiredDuringSchedulingIgnoredDuringExecution: 
+            nodeSelectorTerms: 
+            - matchExpressions: 
+              - key: node-role.kubernetes.io/infrastructure
+                operator: NotIn
+                values: 
+                - "k8s-node3"
       containers: 
         - name: order-container
           image: 192.168.0.62/microservice/order:dev-b06fd015
