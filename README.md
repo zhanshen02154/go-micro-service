@@ -15,27 +15,31 @@
 - 原版使用的GORM 1.9.6升级为1.30.0
 - 依托GitHub结合Jenkins流水线实现CI/CD。
 
-## 项目文档
-- [变更日志](./docs/CHANGELOG.md)
-- [决策记录](./docs/DECISIONS.md)
+## 各服务代码仓库及相关文档
+### 订单服务
+- 代码仓库: https://github.com/zhanshen02154/order
+- 变更日志: https://github.com/zhanshen02154/order/blob/master/docs/CHANGELOG.md
+- 决策记录: https://github.com/zhanshen02154/order/blob/master/docs/DECISIONS.md
 
-## 总项目目录结构
+### 商品服务
+- 代码仓库: https://github.com/zhanshen02154/product
+- 变更日志: https://github.com/zhanshen02154/product/blob/master/docs/CHANGELOG.md
+- 决策记录: https://github.com/zhanshen02154/product/blob/master/docs/DECISIONS.md
+
+## 目录结构
 ```tree
-├─.chglog   # git-chglog配置文件及模板
-├─consul    # Consul安装脚本及配置文件
-├─docker    # Docker安装脚本及配置文件
-├─docs      # 项目文档
-├─etcd      # ETCD安装脚本
-├─harbor    # Harbor安装脚本及配置文件
-├─jenkins   # Jenkins安装脚本及配置文件
-├─k8s-config # K8S安装脚本及配置文件
-└─mysql     # mysql安装脚本及配置文件
+├─.chglog
+├─consul
+├─docker
+├─docs
+├─dtm
+├─etcd
+├─harbor
+├─jenkins
+├─k8s-config
+├─kafka
+└─mysql
 ```
-
-## 各服务代码仓库：
-
-- 订单服务：https://github.com/zhanshen02154/order
-- 商品服务：https://github.com/zhanshen02154/product
 
 ## 技术选型
 
@@ -57,7 +61,7 @@
 | 配置              | 数量 | 用途                                               |
 |-----------------|----|--------------------------------------------------|
 | CPU x4 + 8 GB内存 | 2  | 微服务运行环境（含K8S集群、Apisix、Apisix Ingress Controller） |
-| CPU x2 + 4 GB内存 | 1  | MySQL + jenkins + Harbor + consul                |
+| CPU x4 + 8 GB内存 | 2  | MySQL + jenkins + Harbor + consul + Kafka + ETCD |
 | CPU x2 + 2 GB内存 | 1  | K8S主节点                                           |
 
 ## 部署流程
