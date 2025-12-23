@@ -1,12 +1,14 @@
 # 决策记录
 
-## ADR-011: 撤销[ADR-008-服务注册/发现及配置从Consul迁移至ETCD](https://github.com/zhanshen02154/go-micro-service/blob/master/docs/DECISIONS.md#adr-008-服务注册/发现及配置从Consul迁移至ETCD)
+## ADR-011: 撤销ADR-008-服务注册/发现及配置从Consul迁移至ETCD
 ### 日期
 2025年12月19日
 ### 状态
 已采纳
 ### 背景
 原计划迁移Consul到ETCD，但Apisix官方无支持ETCD服务发现的组件。
+### 原方案
+- 见[ADR-008: 服务注册/发现及配置从Consul迁移至ETCD](https://github.com/zhanshen02154/go-micro-service/blob/master/docs/DECISIONS.md#adr-008-服务注册/发现及配置从Consul迁移至ETCD)
 ### 最终方案
 - 撤销ADR-008。
 - 优化ETCD分布式锁实现共享会话，降低网络资源开销。
@@ -63,7 +65,7 @@
 
 ---
 
-## ADR-009: Logstash更换为Fluent bit
+## ADR-009: Logstash更换为Fluent-bit
 ### 日期
 2025年12月17日
 ### 状态
