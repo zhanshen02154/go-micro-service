@@ -56,13 +56,14 @@
 | ETCD       | 3.5.7   | 服务注册/发现/数据存储（用于Apisix、分布式锁） | 
 | Go-micro   | 4.11.0  | 各服务开发框架                     | 
 | Github     | -       | 代码托管平台                      | 
+| LUA        | -       | 编写Fluent bit过滤器             | 
 
 ## 服务器配置
-| 配置              | 数量 | 用途                                               |
-|-----------------|----|--------------------------------------------------|
-| CPU x4 + 8 GB内存 | 2  | 微服务运行环境（含K8S集群、Apisix、Apisix Ingress Controller） |
-| CPU x4 + 8 GB内存 | 2  | MySQL + jenkins + Harbor + consul + Kafka + ETCD |
-| CPU x2 + 2 GB内存 | 1  | K8S主节点                                           |
+| 配置              | 数量 | 用途                                                                            |
+|-----------------|----|-------------------------------------------------------------------------------|
+| CPU x4 + 8 GB内存 | 2  | 微服务运行环境（含K8S集群、Apisix、Apisix Ingress Controller）                              |
+| CPU x4 + 8 GB内存 | 2  | MySQL + jenkins + Harbor + consul + Kafka + ETCD + Fluent bit + Elasticsearch |
+| CPU x2 + 2 GB内存 | 1  | K8S主节点                                                                        |
 
 ## 部署流程
 - github创建/合并Pull Request触发WebHook
