@@ -1,2 +1,7 @@
 
 .idea
+
+*.yaml
+*.crt
+*.key
+*.pem
