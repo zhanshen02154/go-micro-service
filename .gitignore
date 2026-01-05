@@ -5,3 +5,4 @@
 *.crt
 *.key
 *.pem
+docker-compose.yaml
