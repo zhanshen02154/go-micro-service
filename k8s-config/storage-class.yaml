@@ -1,8 +1,0 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: nfs
-  namespace: dev
-provisioner: kubernetes.io/no-provisioner  # NFS 不需要动态 provisioner
-reclaimPolicy: Retain  # 默认值是 Delete
-volumeBindingMode: WaitForFirstConsumer   # 等待 Pod 使用 PVC 时才绑定 PV,默认使用 Immediate 模式：立即绑定
