@@ -80,13 +80,14 @@ MySQL造成性能急剧下降的问题，用幂等性确保消息不会重复处
 | Elasticsearch       | 8.18.8  | 存储链路追踪和日志          | 
 | Fluent bit          | 4.1.0   | 收集Apisix和微服务的日志    | 
 | DTM                 | 1.19    | 分布式事务              | 
-| Kafka     | 3.1.0   | 收集Apisix日志、项目的核心组件 | 
+| Kafka               | 3.1.0   | 收集Apisix日志、项目的核心组件 | 
+| Prometheus Agent    | 2.43    | 收集并上报监控指标          | 
 
 ## 服务器各节点配置及运行的组件
-| 服务器配置          | 数量 | 组件                                                                                                                                     |
-|----------------|----|----------------------------------------------------------------------------------------------------------------------------------------|
-| CPU x 4 + 8G内存 | 5  | Apisix（2个副本）、订单服务x2、商品服务x2、fluent bit、Jaeger Collector、Elasticsearch、fluent bit、Jaeger Ingester、Consul、ETCD、MySQL、kafka、Jenkins、Harbor |
-| CPU x 2 + 2G内存 | 1  | K8S主节点                                                                                                                                 |
+| 服务器配置          | 数量 | 组件                                                                                                                                                |
+|----------------|----|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| CPU x 4 + 8G内存 | 5  | Apisix（2个副本）、订单服务x2、商品服务x2、fluent bit、Jaeger Collector、Elasticsearch、fluent bit、Jaeger Ingester、Consul、ETCD、MySQL、kafka、Jenkins、Harbor、Prometheus |
+| CPU x 2 + 2G内存 | 1  | K8S主节点                                                                                                                                            |
 
 ## 部署指南
 ### 基础设施
