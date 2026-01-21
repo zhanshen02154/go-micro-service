@@ -1,4 +1,81 @@
 
+<a name="v6.1.0"></a>
+## [v6.1.0](https://github.com/zhanshen02154/go-micro-service/compare/v6.0.0...v6.1.0) (2026-01-21)
+
+## 订单服务
+
+### Bug Fixes
+
+* 幂等性判断列入到重试函数里
+* 引入context重试
+* 统一时间度量单位
+* 死信队列不再投递直接记录错误
+* 死信队列由包装器改为handler
+* 修复确认支付找不到订单的处理逻辑
+* **broker:** 恢复broker生产端幂等性
+* **死信队列:** 返回错误即投到死信队列
+
+### Code Refactoring
+
+* 事件映射改为sync.Map
+* 用secret注入环境变量
+* **broker:** 修改单挑消条最大执行时间
+* **分布式锁:** ETCD替换为Redis
+* **日志:** 删除无用的判断
+
+### Features
+
+* 新增重试机制
+
+### Performance Improvements
+
+* 优化镜像体积
+
+### BREAKING CHANGE
+
+
+- 新增重试机制
+- 精简service文件的包数量
+- 死信队列由包装器改为ErrorHandler
+- 强制使用非root用户运行
+- 更新基础镜像为alpine:3.23.2
+- 用make编译可执行文件
+- 分布式锁底层由ETCD改为Redis
+- 新增分布式锁健康检查
+
+## 商品服务
+
+### Bug Fixes
+
+* 死信队列不再投递直接记录错误
+* 修复订阅事件死信队列影响日志输出问题
+* **broker:** 恢复生产端幂等性限制
+* **订阅者:** 统一订阅者最长处理时间度量单位
+
+### Code Refactoring
+
+* 事件侦听器的发布器改为sync.Map
+* **broker:** 修改最大执行时间
+* **分布式锁:** 由ETCD改为Redis
+
+### Features
+
+* 引入重试机制
+* **健康检查:** 调整健康检查逻辑
+* **分布式锁:** 增加redis组件依赖
+
+### BREAKING CHANGE
+
+
+- 引入订阅端重试
+- 改写bootstrap下的service
+- 删除死信队列包装器，改用ErrorHandler
+- 投递到死信队列逻辑不判断错误类型
+- 事件侦听器的发布器改为sync.Map
+- 将分布式锁组件从ETCD更改为Redis
+- 重构分布式锁接口
+
+
 <a name="v6.0.0"></a>
 ## v6.0.0 (2026-01-15)
 
