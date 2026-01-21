@@ -6,3 +6,5 @@
 *.key
 *.pem
 docker-compose.yaml
+*.p12
+*.log
