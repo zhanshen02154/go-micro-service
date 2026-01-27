@@ -4,7 +4,7 @@
 - 本项目为个人项目，内置部分自编组件，请勿在未经允许的前提下使用Releases的产物及源码用于商业用途，若需合作请发送邮件到zhanshen02154@gmail.com联系作者本人。
 - 严禁将代码及产物用于非法活动如赌博、诈骗、洗钱等，一经发现将追究法律责任！
 
-## 项目描述
+## 项目概述
 以“订单支付成功回调扣减商品库存”链路进行微服务架构演进的深度实践，总体为事件驱动架构，服务是DDD领域驱动架构，分为订单服务和商品服务（支付服务和订单服务合并以减少服务器的使用降低服务器成本，库存服务同理）。 项目采用Scrum作为迭代管理模型，周期为2周，管理工具
 为Github Project。
 
@@ -18,9 +18,55 @@ MySQL造成性能急剧下降的问题，用幂等性确保消息不会重复处
 
 6.0版引入Prometheus实现基本监控，包括kafka、MySQL、ETCD、Redis和微服务的监控，精准定位性能瓶颈，K8S集群仅部署Prometheus Agent用于上报数据，利用阿里云的免费额度实现零成本监控。
 
+6.2开始将Jaeger和ES等可观测性基础设施迁移到阿里云应用监控服务以降低服务器使用成本，退订一台服务器。
+
+## 技术选型
+
+| 开发语言及工具          | 版本      | 用途                 |
+|------------------|---------|--------------------|
+| kubernetes       | 1.23.1  | 容器编排               |
+| docker           | 20.10.7 | 容器运行               |
+| jenkins          | 2.346.1 | CI/CD              |
+| MySQL            | 5.7.26  | 数据库                |
+| Apisix           | 3.4.1   | API网关              | 
+| harbor           | 1.8.6   | docker私有仓库         | 
+| golang           | 1.20.10 | 各服务开发语言            | 
+| Consul           | 1.7.3   | 服务注册/发现            | 
+| ETCD             | 3.5.7   | Apisix、分布式锁        | 
+| Go-micro         | 4.11.0  | 各服务开发框架            | 
+| Github           | -       | 代码托管和项目管理          | 
+| LUA              | -       | 编写Fluent bit过滤器    | 
+| Opentelemetry    | -       | 链路追踪               | 
+| Fluent bit       | 4.1.0   | 收集Apisix和微服务的日志    | 
+| DTM              | 1.19    | 分布式事务              | 
+| Kafka            | 3.1.0   | 收集Apisix日志、项目的核心组件 | 
+| Prometheus Agent | 2.43    | 收集并上报监控指标          |
+
+## 各服务器组件配置
+
+k8s-master为K8S集群主节点，k8s-node1--3为子节点。
+
+| 组件               | Request           | Limits             | 数量 | 服务器名                              |
+|------------------|-------------------|--------------------|----|-----------------------------------|
+| Apisix           | 500m CPU + 512M内存 | 1100m CPU + 1GB内存  | 2  | k8s-node1 + k8s-node3             |
+| 订单服务             | 500m CPU + 128M内存 | 1100m CPU + 512M内存 | 2  | k8s-node1 + k8s-node2             |
+| 商品服务             | 500m CPU + 128M内存 | 1000m CPU + 450M内存 | 2  | k8s-node1 + k8s-node2             |
+| fluent bit       | 100m CPU + 128M内存 | 500m CPU + 512M内存  | 3  | k8s-node1 + k8s-node2 + k8s-node3 | 
+| Prometheus Agent | 100m CPU + 128M内存 | 1000m CPU + 800M内存 | 1  | k8s-node3                         |
+| MySQL            | -                 | -                  | 1  | 基础设施服务器1                          |
+| Redis            | -                 | -                  | 1  | 基础设施服务器1                          |
+| ETCD             | -                 | -                  | 1  | 基础设施服务器1                          |
+| Consul           | -                 | -                  | 1  | 基础设施服务器1                          |
+| Jenkins          | -                 | -                  | 1  | 基础设施服务器1                          |
+| Harbor           | -                 | -                  | 1  | 基础设施服务器1                          |
+| Kafka            | -                 | -                  | 1  | 基础设施服务器1、k8s-node3                |
+| Docker           | -                 | -                  | 1  | 所有节点                              |
+| K8S基础组件calico等   | -                 | -                  | 1  | K8S集群                             |
+
 ## 项目特点
 - 实现端到端交付。
-- 用事件驱动架构解耦跨服务通信提升吞吐量，极限压测结果显示1.0版仅为215Qps，2.0版为65QPS（因DTM操作数据库加上当时基础设施服务器仅2核4G导致系统压力过大），最高达1596Qps，P95延迟从2.0版超过2秒到如今的53ms。
+- 用事件驱动架构解耦跨服务通信提升吞吐量，最高达1596Qps。
+- 6.0.0起转向负载测试，回调接口峰值为761Qps。
 性能大幅提升。
 - 具备服务健康检查。
 - 使用自编的事务管理器结合GORM的事务完成事务处理实现数据一致性。
@@ -29,6 +75,23 @@ MySQL造成性能急剧下降的问题，用幂等性确保消息不会重复处
 - 将自行编写DTM专用的编解码器植入框架弥补go micro v4无原生支持的问题。
 - 修改Go micro v4的broker底层源码以支持带key发布到kafka实现消息顺序消费。
 - 用死信队列及幂等性保证系统可靠。
+
+## 项目压测及负载测试报告
+
+由于从6.0开始使用的组件大量增加需要验证系统稳定性故转向负载测试确认系统安全边界，故从6.0.0起转向负载测试。
+
+### 说明
+压测及负载测试环境使用本地电脑的Nginx配置负载均衡充当“负载均衡器”连接NodePort类型的Apisix，关闭无用的服务减少TCP连接尽量减少干扰但难以避免，最新版的负载测试结果显示最高峰为761Qps，
+P95延迟41ms，每个服务2个副本，单个Pod配置1核CPU + 512Mi内存。
+
+- [6.2.0负载测试报告](https://github.com/zhanshen02154/order/issues/173)
+- [6.1.0负载测试报告](https://github.com/zhanshen02154/order/issues/161)
+- [6.0.0负载测试报告](https://github.com/zhanshen02154/order/issues/151)
+- [5.0.0压测报告](https://github.com/zhanshen02154/order/issues/125)
+- [4.0.0压测报告](https://github.com/zhanshen02154/go-micro-service/issues/28)
+- [3.0.0压测报告](https://github.com/zhanshen02154/order/issues/72)
+- [2.0.0压测报告](https://github.com/zhanshen02154/order/issues/53)
+- [1.0.0压测报告](https://github.com/zhanshen02154/go-micro-service/issues/13)
 
 ## 项目改造前后对比
 本项目由网课教程改造而成，改造前后的对比如下：
@@ -46,50 +109,38 @@ MySQL造成性能急剧下降的问题，用幂等性确保消息不会重复处
 | 无CI/CD                  | 具备CI/CD流水线                                                                                                                                     |     
 | 系统性能未经验证                | 有压测和负载测试验证                                                                                                                                     |
 | 仅实现基本业务功能               | 订单支付回调链路实现高可用、高吞吐量，从GRPC微服务通信逐步迭代到事件驱动架构。                                                                                                      |
-| 仅演示集成到Jaeger和Prometheus | 实现支付回调过程的全链路追踪和基础设施监控，各组件分开部署符合生产要求                                                                                                            |
+| 仅演示集成到Jaeger和Prometheus | 接入阿里云可观测服务实现支付回调过程的全链路追踪和基础设施监控。                                                                                                               |
 | 无日志                     | 包含GRPC请求日志、Apisix请求日志、发布日志、订阅日志，通过fluent bit收集并存储到Elasticsearch<br/>                                                                           |
 | 无分布式锁                   | 从ETCD分布式锁到Redis分布式锁                                                                                                                            |
 | 无Api网关接入                | 接入API网关                                                                                                                                        |
 
 ## 各服务代码仓库及相关文档
 ### 订单服务
-- 代码仓库: https://github.com/zhanshen02154/order
-- 变更日志: https://github.com/zhanshen02154/order/blob/master/docs/CHANGELOG.md
-- 决策记录: https://github.com/zhanshen02154/order/blob/master/docs/DECISIONS.md
+
+- [代码仓库](https://github.com/zhanshen02154/order)
+
+- [变更日志](https://github.com/zhanshen02154/order/blob/master/docs/CHANGELOG.md)
+
+- [决策记录](https://github.com/zhanshen02154/order/blob/master/docs/DECISIONS.md)
 
 ### 商品服务
-- 代码仓库: https://github.com/zhanshen02154/product
-- 变更日志: https://github.com/zhanshen02154/product/blob/master/docs/CHANGELOG.md
-- 决策记录: https://github.com/zhanshen02154/product/blob/master/docs/DECISIONS.md
 
-## 技术选型
+- [代码仓库](https://github.com/zhanshen02154/product)
 
-| 开发语言及工具             | 版本      | 用途                 |
-|---------------------|---------|--------------------|
-| kubernetes          | 1.23.1  | 容器编排               |
-| docker              | 20.10.7 | 容器运行               |
-| jenkins             | 2.346.1 | CI/CD              |
-| MySQL               | 5.7.26  | 数据库                |
-| Apisix              | 3.4.1   | API网关              | 
-| harbor              | 1.8.6   | docker私有仓库         | 
-| golang              | 1.20.10 | 各服务开发语言            | 
-| Consul              | 1.7.3   | 服务注册/发现            | 
-| ETCD                | 3.5.7   | Apisix、分布式锁        | 
-| Go-micro            | 4.11.0  | 各服务开发框架            | 
-| Github              | -       | 代码托管和项目管理          | 
-| LUA                 | -       | 编写Fluent bit过滤器    | 
-| Jaeger（非all-in-one） | 1.74.0  | 链路追踪               | 
-| Elasticsearch       | 8.18.8  | 存储链路追踪和日志          | 
-| Fluent bit          | 4.1.0   | 收集Apisix和微服务的日志    | 
-| DTM                 | 1.19    | 分布式事务              | 
-| Kafka               | 3.1.0   | 收集Apisix日志、项目的核心组件 | 
-| Prometheus Agent    | 2.43    | 收集并上报监控指标          | 
+- [变更日志](https://github.com/zhanshen02154/product/blob/master/docs/CHANGELOG.md)
 
-## 服务器各节点配置及运行的组件
-| 服务器配置          | 数量 | 组件                                                                                                                                                |
-|----------------|----|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| CPU x 4 + 8G内存 | 5  | Apisix（2个副本）、订单服务x2、商品服务x2、fluent bit、Jaeger Collector、Elasticsearch、fluent bit、Jaeger Ingester、Consul、ETCD、MySQL、kafka、Jenkins、Harbor、Prometheus |
-| CPU x 2 + 2G内存 | 1  | K8S主节点                                                                                                                                            |
+- [决策记录](https://github.com/zhanshen02154/product/blob/master/docs/DECISIONS.md)
+
+## 项目部分基础设施截图
+- [微服务及Apisix](./docs/dev.png)
+- [可观测性基础设施](./docs/observability.png)
+- [Harbor](./docs/harbor.png)
+- [Jenkins](./docs/jenkins.png)
+- [Consul](./docs/consul.png)
+
+### 后续规划
+- 引入配置热更新减少频繁重启
+- 转向Serverless
 
 ## 部署指南
 ### 基础设施
@@ -127,33 +178,22 @@ kubectl apply -f <filename>
 - 进入logs目录查看meta.properties里面有集群的UUID将其复制出来。
 - 到另一个节点的kafka目录里执行bin/kafka-storage.sh format -t $SERVERUUID -c config/kraft/server.properties（$SERVERUUID就是基础设施服务器节点1获得的集群UUID）。
 
-## 部署Elasticsearch
-- 设置K8S集群节点标签，根据nodeSelector的规则来设置
-- 用elasticsearch.yaml和configMap部署到K8S集群
-- [点击此处](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.18.8-windows-x86_64.zip)下载ES到本地电脑， 用elasticsearch-certutil http生成自签证书（生产环境要用CA机构颁发的证书）
-- 用生成好的ca.p12生成ca.pem用于Jaeger和其他客户端与ES通信
-- 创建带有http.p12的secret
-- 应用configMap文件：es.conf
-- 应用elasticsearch.yaml部署到K8S集群
-- 为jaeger和fluentbit开通ES的账号
-
 ## 部署Fluent bit
-- 应用fluent-bit-conf.yaml加载configmap
-- 创建带有ca.pem的secret
 - ```bash
   helm install fluent-bit fluent/fluent-bit --version 0.54.0 --values fluent-bit-values.yaml -n observability
   ```
-## 部署Jaeger
-- 创建用于Jaeger的secret，包含ca.pem
-- ```bash
-  helm install jaeger jaegertracing/jaeger \
-  --namespace observability \
-  --version 3.2.0 \
-  -f jaeger-values.yaml
-  ```
+## 接入阿里云SLS
+- 创建2个服务和Apisix的Project，Apisix的Logstore名为request，其余两个服务都要创建的logstore分别是request、publish、subscribe、sql、core。
+- fluent bit配置按比例采集和Filter的RewriteTag，对不同的服务设置不同的Tag。
+- fluent bit创建2个OUTPUT配置两个服务的topics和topic_key（日志的type字段），topic_key的数据对应logstore，rdkafka.sasl.username对应project（这里只能写死或使用环境变量），Brokers是Project名称和私网地址的组合，端口号10011。
+- Apisix的日志在全局规则里配置SLS-logger即可，压测前要禁用该插件防止生成大量日志。
+  
+## 接入阿里云Opentelemetry
+- 连接私网的Opentelemetry地址，域名和Path分开。
   
 ### 部署Prometheus Agent
-- Prometheus
+- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（生产环境需要增加对集群的监控）。
+- 用helm和prometheus.yaml文件安装Prometheus Agent。
 
 ## 本地开发环境搭建
 - 下载虚拟机，安装CentOS。

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+  namespace: dev
+spec:
+  replicas: 2
+  revisionHistoryLimit: 8
+  selector: 
+    matchLabels: 
+      app: order-service
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template: 
+    metadata: 
+      labels:
+        app: order-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9092"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+    spec: 
+      restartPolicy: Always
+      affinity: 
+        podAntiAffinity: 
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm: 
+              labelSelector: 
+                matchExpressions: 
+                - key: app
+                  operator: In
+                  values: 
+                  - "order-service"
+              topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        svc: microservice
+      containers: 
+        - name: order-container
+          image: 192.168.0.62/microservice/order:dev-98e9d673
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1002
+            runAsGroup: 1002
+            allowPrivilegeEscalation: false
+          env:
+            - name: CONSUL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: consul
+                  key: CONSUL_HOST
+            - name: CONSUL_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: consul
+                  key: CONSUL_PREFIX
+          ports: 
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9000
+            - name: monitoring
+              containerPort: 9092
+          livenessProbe: 
+            httpGet: 
+              path: "/healthz"
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe: 
+            httpGet: 
+              path: "/ready"
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources: 
+            requests: 
+              cpu: "500m"
+              memory: "128Mi"
+            limits: 
+              cpu: "1100m"
+              memory: "512Mi"
+      imagePullSecrets: 
+        - name: myregcred

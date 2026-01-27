@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  labels: 
+    app: product-service
+  name: product-service
+  namespace: dev
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector: 
+    matchLabels: 
+      app: product-service
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template: 
+    metadata: 
+      labels: 
+        app: product-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9092"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+    spec:
+      nodeSelector:
+        svc: microservice
+      restartPolicy: Always
+      affinity: 
+        podAntiAffinity: 
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm: 
+              labelSelector: 
+                matchExpressions: 
+                - key: app 
+                  operator: In
+                  values: 
+                  - "product-service"
+              topologyKey: kubernetes.io/hostname
+      containers: 
+        - name: product-container
+          image: 192.168.0.62/microservice/product:dev-361ce96d
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1002
+            runAsGroup: 1002
+            allowPrivilegeEscalation: false
+          env:
+            - name: CONSUL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: consul
+                  key: CONSUL_HOST
+            - name: CONSUL_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: consul
+                  key: CONSUL_PREFIX
+          ports: 
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9000
+            - name: monitoring
+              containerPort: 9092
+          livenessProbe: 
+            httpGet: 
+              path: "/healthz"
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe: 
+            httpGet: 
+              path: "/ready"
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          resources: 
+            requests: 
+              cpu: "500m"
+              memory: "128Mi"
+            limits: 
+              cpu: "1000m"
+              memory: "450Mi"
+      imagePullSecrets: 
+        - name: myregcred
