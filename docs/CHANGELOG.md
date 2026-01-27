@@ -1,3 +1,27 @@
+<a name="v6.2.0"></a>
+## [v6.2.0](https://github.com/zhanshen02154/order/go-micro-service/v6.1.0...v6.2.0) (2026-01-26)
+
+## 订单服务
+
+### Bug Fixes
+
+* 调整Handler包装器顺序
+* 修复仓储层获取订单数据报错的问题
+
+### Code Refactoring
+
+* 链路追踪迁移到阿里云
+
+## 商品服务
+
+### Bug Fixes
+
+* 调整GRPC请求的包装器顺序
+
+### Code Refactoring
+
+* 链路追踪迁移到阿里云
+
 
 <a name="v6.1.0"></a>
 ## [v6.1.0](https://github.com/zhanshen02154/go-micro-service/compare/v6.0.0...v6.1.0) (2026-01-21)
