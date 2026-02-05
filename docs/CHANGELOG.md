@@ -1,3 +1,29 @@
+<a name="v6.2.1"></a>
+## [v6.2.1](https://github.com/zhanshen02154/order/go-micro-service/v6.1.0...v6.2.0) (2026-02-05)
+
+## 订单服务
+
+### Code Refactoring
+
+* broker属性替换为默认的broker
+* **broker:** 移除基础设施层的broker
+
+### Performance Improvements
+
+* **配置信息:** 删除无用的配置
+
+## 商品服务
+
+### Performance Improvements
+
+* 删除低性能的对象池
+* **broker:** 用默认broker代替broker属性
+
+### BREAKING CHANGE
+
+
+- 移除基础设施层的所有broker属性
+
 <a name="v6.2.0"></a>
 ## [v6.2.0](https://github.com/zhanshen02154/order/go-micro-service/v6.1.0...v6.2.0) (2026-01-26)
 
