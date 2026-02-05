@@ -141,6 +141,9 @@ P95延迟41ms，每个服务2个副本，单个Pod配置1核CPU + 512Mi内存。
 - [Harbor](./docs/harbor.png)
 - [Jenkins](./docs/jenkins.png)
 - [Consul](./docs/consul.png)
+- [微服务](./docs/service.png)
+- [Redis监控](./docs/redis-monitor.png)
+- [MySQL监控](./docs/mysql-monitor.png)
 
 ### 后续规划
 - 引入配置热更新减少频繁重启
