@@ -7,3 +7,5 @@
 docker-compose.yaml
 *.p12
 *.log
+
+.vscode

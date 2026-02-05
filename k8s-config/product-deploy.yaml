@@ -61,6 +61,8 @@ spec:
                 secretKeyRef:
                   name: consul
                   key: CONSUL_PREFIX
+            - name: GOMAXPROCS
+              value: '2'
           ports: 
             - name: http
               containerPort: 8080
