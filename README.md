@@ -5,32 +5,48 @@
 - 严禁将代码及产物（含附属品）用于非法活动如赌博、诈骗、洗钱等，一经发现将追究法律责任！
 
 ## 项目概述
-以“订单支付成功回调扣减商品库存”链路进行微服务架构演进的深度实践，部署在K8S集群，总体为事件驱动架构，服务是领域驱动架构。
+以“模拟订单支付成功回调扣减商品库存”链路进行微服务架构演进的深度实践，部署在K8S集群，总体为事件驱动架构，服务是领域驱动架构，服务各层均设计为可插拔结构便于替换组件。
 全项目采用Scrum，迭代周期为2周，管理工具为Github Project。
 
 本项目旨在实践微服务架构演进、项目管理规范，故将分为订单服务和商品服务， 支付服务和订单服务合并以减少服务器的使用降低服务器成本，库存服务同理，企业级应用必须直接拆分成库存服务和支付服务。
 
-所有服务均包含CI/CD流水线实现自动化部署。从1.0的GRPC跨服务调用到事件驱动架构，实现异步通信解耦，摆脱对GRPC客户端的依赖，解决2.0版DTM分布式事务操作
-MySQL造成性能急剧下降的问题，改造成事件驱动后用幂等性确保消息不会重复处理，将处理失败/推送失败的数据放入死信队列做回滚操作，保证服务高可用的同时提升系统吞吐量。 各微服务为领域驱动架构，大量使用面向接口编程，除DTM对
-顶层业务代码侵入明显以外其余组件均设计为可插拔结构，基础设施层的替换不影响领域层、接口层和应用层。
+所有服务均配置CI/CD流水线实现自动化部署。从1.0的GRPC跨服务调用到事件驱动架构，实现异步通信解耦，摆脱对GRPC客户端的依赖，解决2.0版DTM分布式事务操作MySQL造成性能急剧下降的问题。
 
 5.0版本引入Jaeger实现从GRPC请求到发布/订阅事件的监控，并于6.0版细化到对投递消息到死信队列的追踪，调用链路监控进一步完善。
 
 6.0版引入Prometheus实现基本监控，包括kafka、MySQL、ETCD、Redis和微服务的监控，精准定位性能瓶颈，K8S集群仅部署Prometheus Agent用于上报数据，利用云厂商的免费额度实现零成本监控。
 
 ## 项目特点
+- 修改Go micro v4底层源码以满足实际需求。
 - 将事件驱动架构落地实现端到端交付。
 - 支付回调API接口P95响应时间从最初的1150ms降低到34ms。
-- 使用自编的事务管理器结合GORM的事务完成事务处理实现数据一致性。
+- 可观测性基础设施由自建迁移到云服务，降低使用成本。
 - 实现配置去中心化，减少对Configmap的依赖。
 - 依托GitHub结合Jenkins流水线实现CI/CD。
-- 修改Go micro v4底层源码以满足实际需求。
-- 用死信队列及幂等性保证系统可靠。
-- 按比例采集日志，兼顾性能和排错。
-- 用Opentelemetry实现可观测链路分析。
+
+## 各服务代码仓库及相关文档
+### 订单服务
+
+- [代码仓库](https://github.com/zhanshen02154/order)
+
+- [变更日志](https://github.com/zhanshen02154/order/blob/master/docs/CHANGELOG.md)
+
+- [决策记录](https://github.com/zhanshen02154/order/blob/master/docs/DECISIONS.md)
+
+- [项目路线图](https://github.com/users/zhanshen02154/projects/2/views/4)
+
+### 商品服务
+
+- [代码仓库](https://github.com/zhanshen02154/product)
+
+- [变更日志](https://github.com/zhanshen02154/product/blob/master/docs/CHANGELOG.md)
+
+- [决策记录](https://github.com/zhanshen02154/product/blob/master/docs/DECISIONS.md)
+
+- [项目路线图](https://github.com/users/zhanshen02154/projects/3/views/4)
 
 ## 项目压测及负载测试
-回调API接口压测及负载测试环境使用本地电脑的Nginx配置反向代理充当“负载均衡器”连接Apisix，会受到Windows系统内置组件及后台应用程序的干扰，但总体表现良好。
+由于SLB存在成本，回调API接口压测及负载测试环境使用本地电脑的Nginx配置反向代理充当“负载均衡器”连接Apisix，会受到Windows系统内置组件及后台应用程序的干扰，但Nginx参数调大让其处理更多连接。
 
 ### 性能测试方法变更及绝对数值变化说明
 1.0.0--4.0.0为极限压测，5.0.0起不再检测极限压力转向负载测试，期间有改变测试参数，在本文“各版本测试报告”中均有说明。改变测试方法后绝对数值变化较大但仍会暴露性能瓶颈，更符合生产环境需要。
@@ -109,6 +125,7 @@ k8s-master为K8S集群主节点，k8s-node1--3为子节点。
 ## 总项目文档
 - [变更日志](./docs/CHANGELOG.md)
 - [决策记录](./docs/DECISIONS.md)
+- [路线图](https://github.com/users/zhanshen02154/projects/1/views/4)
 
 ## 项目改造前后对比
 
@@ -136,23 +153,6 @@ k8s-master为K8S集群主节点，k8s-node1--3为子节点。
 | 接入云服务            | ×                    | √                                          |
 | Opentelemetry    | ×                    | √                                          |
 | Prometheus Agent | ×                    | √                                          |
-
-## 各服务代码仓库及相关文档
-### 订单服务
-
-- [代码仓库](https://github.com/zhanshen02154/order)
-
-- [变更日志](https://github.com/zhanshen02154/order/blob/master/docs/CHANGELOG.md)
-
-- [决策记录](https://github.com/zhanshen02154/order/blob/master/docs/DECISIONS.md)
-
-### 商品服务
-
-- [代码仓库](https://github.com/zhanshen02154/product)
-
-- [变更日志](https://github.com/zhanshen02154/product/blob/master/docs/CHANGELOG.md)
-
-- [决策记录](https://github.com/zhanshen02154/product/blob/master/docs/DECISIONS.md)
 
 ## 项目部分基础设施截图
 - [微服务及Apisix](./docs/dev.png)
