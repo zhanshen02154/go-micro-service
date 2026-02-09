@@ -1,36 +1,62 @@
 # Golang微服务架构演进实践
 
 ## 声明
-- 本项目内置部分自编组件，请勿在未经允许的前提下使用Releases的产物及源码用于商业用途，若需合作请发送邮件到zhanshen02154@gmail.com联系作者本人。
-- 严禁将代码及产物用于非法活动如赌博、诈骗、洗钱等，一经发现将追究法律责任！
+- 请勿未经允许使用Releases的产物及源码用于商业用途，若需合作请发送邮件到zhanshen02154@gmail.com联系作者本人。
+- 严禁将代码及产物（含附属品）用于非法活动如赌博、诈骗、洗钱等，一经发现将追究法律责任！
 
 ## 项目概述
-以“订单支付成功回调扣减商品库存”链路进行微服务架构演进的深度实践，总体为事件驱动架构，服务是DDD领域驱动架构，分为订单服务和商品服务（支付服务和订单服务合并以减少服务器的使用降低服务器成本，库存服务同理）。 项目采用Scrum作为迭代管理模型，周期为2周，管理工具
-为Github Project。
+以“订单支付成功回调扣减商品库存”链路进行微服务架构演进的深度实践，部署在K8S集群，总体为事件驱动架构，服务是领域驱动架构。
+全项目采用Scrum，迭代周期为2周，管理工具为Github Project。
 
-项目旨在模拟微服务架构演进、项目管理规范及优秀技术实践，包含CI/CD流水线实现自动化部署。从1.0的GRPC跨服务调用到事件驱动架构，实现异步通信解耦，摆脱对GRPC客户端的依赖，解决2.0版DTM分布式事务操作
-MySQL造成性能急剧下降的问题，用幂等性确保消息不会重复处理，将处理失败/推送失败的数据放入死信队列做回滚操作，保证服务高可用的同时提升系统吞吐量。 各微服务为领域驱动架构，大量使用面向接口编程，除DTM对
+本项目旨在模拟微服务架构演进、项目管理规范及优秀技术实践，故将分为订单服务和商品服务， 支付服务和订单服务合并以减少服务器的使用降低服务器成本，库存服务同理，企业级应用必须直接拆分成库存服务和支付服务。
+
+所有服务均包含CI/CD流水线实现自动化部署。从1.0的GRPC跨服务调用到事件驱动架构，实现异步通信解耦，摆脱对GRPC客户端的依赖，解决2.0版DTM分布式事务操作
+MySQL造成性能急剧下降的问题，改造成事件驱动后用幂等性确保消息不会重复处理，将处理失败/推送失败的数据放入死信队列做回滚操作，保证服务高可用的同时提升系统吞吐量。 各微服务为领域驱动架构，大量使用面向接口编程，除DTM对
 顶层业务代码侵入明显以外其余组件均设计为可插拔结构，基础设施层的替换不影响领域层、接口层和应用层。
-
-由于go micro v4无原生支持DTM分布式事务的组件且资料匮乏，故自行编写编解码器适配GRPC模式下的DTM以确保能正常访问GRPC接口。
 
 5.0版本引入Jaeger实现从GRPC请求到发布/订阅事件的监控，并于6.0版细化到对投递消息到死信队列的追踪，调用链路监控进一步完善。
 
-6.0版引入Prometheus实现基本监控，包括kafka、MySQL、ETCD、Redis和微服务的监控，精准定位性能瓶颈，K8S集群仅部署Prometheus Agent用于上报数据，利用阿里云的免费额度实现零成本监控。
-
-6.2开始将Jaeger和ES等可观测性基础设施迁移到阿里云应用监控服务以降低服务器使用成本，退订一台服务器。
+6.0版引入Prometheus实现基本监控，包括kafka、MySQL、ETCD、Redis和微服务的监控，精准定位性能瓶颈，K8S集群仅部署Prometheus Agent用于上报数据，利用云厂商的免费额度实现零成本监控。
 
 ## 项目特点
-- 实现端到端交付。
-- 用事件驱动架构解耦跨服务通信提升吞吐量，最高达1596Qps。
-- 6.0.0起转向负载测试，回调接口峰值为761Qps。性能大幅提升。
-- 具备服务健康检查。
+- 将事件驱动架构落地实现端到端交付。
+- 支付回调API接口P95响应时间从最初的1150ms降低到34ms。
 - 使用自编的事务管理器结合GORM的事务完成事务处理实现数据一致性。
-- 配置去中心化，避免对configmap的依赖。
+- 实现配置去中心化，减少对Configmap的依赖。
 - 依托GitHub结合Jenkins流水线实现CI/CD。
-- 将自行编写DTM专用的编解码器植入框架弥补go micro v4无原生支持的问题。
-- 修改Go micro v4底层源码以支持消息顺序消费。
+- 修改Go micro v4底层源码以满足实际需求。
 - 用死信队列及幂等性保证系统可靠。
+- 按比例采集日志，兼顾性能和排错。
+- 用Opentelemetry实现可观测链路分析。
+
+## 项目压测及负载测试
+回调API接口压测及负载测试环境使用本地电脑的Nginx配置反向代理充当“负载均衡器”连接Apisix，会受到Windows系统内置组件及后台应用程序的干扰，但总体表现良好。
+
+### 性能测试方法变更及绝对数值变化说明
+1.0.0--4.0.0为极限压测，5.0.0起不再检测极限压力转向负载测试，期间有改变测试参数，在本文“各版本测试报告”中均有说明。改变测试方法后绝对数值变化较大但仍会暴露性能瓶颈，更符合生产环境需要。
+
+6.2.1的负载测试将高峰阶段3分钟的vus从400上调到405，最大延迟略有增加。
+
+### 压测及负载测试环境
+- Apisix x 2（NodePort）; 单个Pod限制1核CPU + 1G内存
+- Windows 11 
+- Nginx 1.15.11 使用8核CPU，参数全部调大以减少对测试结果的干扰。
+
+### P95延迟和最大延迟变化表
+![P95延迟](./docs/P95.png)
+![最大延迟](./docs/max_duration.png)
+
+### 各版本测试报告
+- [6.3.0负载测试报告](https://github.com/zhanshen02154/go-micro-service/issues/54)
+- [6.2.1负载测试报告](https://github.com/zhanshen02154/go-micro-service/issues/52)
+- [6.2.0负载测试报告](https://github.com/zhanshen02154/order/issues/173)
+- [6.1.0负载测试报告](https://github.com/zhanshen02154/order/issues/161)
+- [6.0.0负载测试报告](https://github.com/zhanshen02154/order/issues/151)
+- [5.0.0负载测试报告](https://github.com/zhanshen02154/order/issues/125)
+- [4.0.0压测报告](https://github.com/zhanshen02154/go-micro-service/issues/28)
+- [3.0.0压测报告](https://github.com/zhanshen02154/order/issues/72)
+- [2.0.0压测报告](https://github.com/zhanshen02154/order/issues/53)
+- [1.0.0压测报告](https://github.com/zhanshen02154/go-micro-service/issues/13)
 
 ## 技术选型
 
@@ -40,20 +66,21 @@ MySQL造成性能急剧下降的问题，用幂等性确保消息不会重复处
 | docker           | 20.10.7 | 容器运行               |
 | jenkins          | 2.346.1 | CI/CD              |
 | MySQL            | 5.7.26  | 数据库                |
-| Apisix           | 3.4.1   | API网关              | 
-| harbor           | 1.8.6   | docker私有仓库         | 
-| golang           | 1.20.10 | 各服务开发语言            | 
-| Consul           | 1.7.3   | 服务注册/发现            | 
-| ETCD             | 3.5.7   | Apisix             | 
-| Go-micro         | 4.11.0  | 各服务开发框架            | 
-| Github           | -       | 代码托管和项目管理          | 
-| LUA              | -       | Fluent bit脚本       | 
-| Opentelemetry    | -       | 链路追踪               | 
-| Fluent bit       | 4.1.0   | 收集Apisix和微服务的日志    | 
-| DTM              | 1.19    | 分布式事务              | 
-| Kafka            | 3.0.1   | 收集Apisix日志、项目的核心组件 | 
+| Apisix           | 3.4.1   | API网关              |
+| harbor           | 1.8.6   | docker私有仓库         |
+| golang           | 1.20.10 | 各服务开发语言            |
+| Consul           | 1.7.3   | 服务注册/发现            |
+| ETCD             | 3.5.7   | Apisix             |
+| Go-micro         | 4.11.0  | 各服务开发框架            |
+| Github           | -       | 代码托管和项目管理          |
+| LUA              | -       | Fluent bit脚本       |
+| Opentelemetry    | -       | 链路追踪               |
+| Fluent bit       | 4.1.0   | 收集Apisix和微服务的日志    |
+| DTM              | 1.19    | 分布式事务              |
+| Kafka            | 3.0.1   | 收集Apisix日志、项目的核心组件 |
 | Prometheus Agent | 2.43    | 收集并上报监控指标          |
-| Redis            | 6.2.20  | 缓存                 |
+| Redis            | 6.2.20  | 缓存 + 分布式锁          |
+| K6               | 1.3.0   | 压力测试及负载测试          |
 
 ## 各服务器组件配置
 
@@ -64,7 +91,7 @@ k8s-master为K8S集群主节点，k8s-node1--3为子节点。
 | Apisix           | 500m CPU + 512M内存 | 1100m CPU + 1GB内存  | 2  | k8s-node1 + k8s-node3             |
 | 订单服务             | 500m CPU + 128M内存 | 1100m CPU + 512M内存 | 2  | k8s-node1 + k8s-node2             |
 | 商品服务             | 500m CPU + 128M内存 | 1000m CPU + 450M内存 | 2  | k8s-node1 + k8s-node2             |
-| fluent bit       | 100m CPU + 128M内存 | 500m CPU + 512M内存  | 3  | k8s-node1 + k8s-node2 + k8s-node3 | 
+| fluent bit       | 100m CPU + 128M内存 | 500m CPU + 512M内存  | 3  | k8s-node1 + k8s-node2 + k8s-node3 |
 | Prometheus Agent | 100m CPU + 128M内存 | 1000m CPU + 800M内存 | 1  | k8s-node3                         |
 | MySQL            | -                 | -                  | 1  | 基础设施服务器1                          |
 | Redis            | -                 | -                  | 1  | 基础设施服务器1                          |
@@ -80,43 +107,32 @@ k8s-master为K8S集群主节点，k8s-node1--3为子节点。
 - [变更日志](./docs/CHANGELOG.md)
 - [决策记录](./docs/DECISIONS.md)
 
-## 项目压测及负载测试报告
-
-由于从6.0开始使用的组件大量增加需要验证系统稳定性故转向负载测试确认系统安全边界，故从6.0.0起转向负载测试。
-
-### 说明
-压测及负载测试环境使用本地电脑的Nginx配置负载均衡充当“负载均衡器”连接NodePort类型的Apisix，关闭无用的服务减少TCP连接尽量减少干扰但难以避免，最新版的负载测试结果显示最高峰为761Qps，
-P95延迟41ms，每个服务2个副本，单个Pod配置1核CPU + 512Mi内存。
-
-- [6.2.0负载测试报告](https://github.com/zhanshen02154/order/issues/173)
-- [6.1.0负载测试报告](https://github.com/zhanshen02154/order/issues/161)
-- [6.0.0负载测试报告](https://github.com/zhanshen02154/order/issues/151)
-- [5.0.0压测报告](https://github.com/zhanshen02154/order/issues/125)
-- [4.0.0压测报告](https://github.com/zhanshen02154/go-micro-service/issues/28)
-- [3.0.0压测报告](https://github.com/zhanshen02154/order/issues/72)
-- [2.0.0压测报告](https://github.com/zhanshen02154/order/issues/53)
-- [1.0.0压测报告](https://github.com/zhanshen02154/go-micro-service/issues/13)
-
 ## 项目改造前后对比
+
 本项目由网课教程改造而成，改造前后的对比如下：
 
-| 改造前                     | 改造后                                                                                                                                            |
-|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| 仅有领域层、仓储层和handler       | 分为领域层、应用层、接口层、 基础设施层，handler合并到接口层，整个项目全部重写                                                                                                    |
-| 配置文件硬编码                 | 用Consul的K/V获取配置，提升配置灵活性                                                                                                                        |
-| go micro框架版本为2.9.1      | 升级到4.11.0，详情见决策记录[ADR-006: 集成DTM分布式事务组件](https://github.com/zhanshen02154/go-micro-service/blob/master/docs/DECISIONS.md#adr-006-集成DTM分布式事务组件) |
-| 拥有电商平台的各项服务但无法通信        | 选取订单支付成功回调链路实现跨服务通信架构演进                                                                                                                        |     
-| GORM版本为1.9.6            | 升级到GORM 1.30.0                                                                                                                                 |     
-| 无健康检查                   | 具备健康检查                                                                                                                                         |     
-| 无工程化管理                  | 遵循git提交规范，用Scrum配合Github Project管理各个迭代，遵循敏捷开发的基本原则如MVP，永远只完成最核心最迫切的任务。                                                                         |     
-| 无知识传承                   | 关注知识传承，如变更日志、决策记录、自述文件。                                                                                                                        |     
-| 无CI/CD                  | 具备CI/CD流水线                                                                                                                                     |     
-| 系统性能未经验证                | 有压测和负载测试验证                                                                                                                                     |
-| 仅实现基本业务功能               | 订单支付回调链路实现高可用、高吞吐量，从GRPC微服务通信逐步迭代到事件驱动架构。                                                                                                      |
-| 仅演示集成到Jaeger和Prometheus | 接入阿里云可观测服务实现支付回调过程的全链路追踪和基础设施监控。                                                                                                               |
-| 无日志                     | 包含GRPC请求日志、Apisix请求日志、发布日志、订阅日志，通过fluent bit收集并存储到Elasticsearch<br/>                                                                           |
-| 无分布式锁                   | 从ETCD分布式锁到Redis分布式锁                                                                                                                            |
-| 无Api网关接入                | 接入API网关                                                                                                                                        |
+| 特性               | 改造前                  | 改造后                                        |
+|------------------|----------------------|--------------------------------------------|
+| 配置去中心化           | ×                    | √                                          |
+| 应用层              | ×                    | √                                          |
+| 基础设施层            | ×                    | √                                          |
+| 接口层              | ×                    | √                                          |
+| 跨服务通信            | ×                    | √ （从GRPC客户端升级到事件驱动架构）                      |
+| 分布式事务            | ×                    | √                                          |
+| 健康检查             | ×                    | √                                          |
+| 工程化管理            | ×                    | √                                          |
+| 迭代               | ×                    | √                                          |
+| 知识传承             | ×                    | √（自述文件、变更日志、决策记录）                          |
+| CI/CD            | ×                    | √                                          |
+| 压力测试             | ×                    | √                                          |
+| 负载测试             | ×                    | √                                          |
+| 日志               | √（ELK和Filebeat，开销极大） | √（Fluent bit和阿里云SLS，开销较小）                  |
+| 分布式锁             | ×                    | √                                          |
+| 接入Api网关          | ×                    | √                                          |
+| 框架/组件升级改造        | ×                    | √（v2.0.0起升级为go micro 4.11.0，GORM升级到1.30.0） |
+| 接入云服务            | ×                    | √                                          |
+| Opentelemetry    | ×                    | √                                          |
+| Prometheus Agent | ×                    | √                                          |
 
 ## 各服务代码仓库及相关文档
 ### 订单服务
@@ -146,7 +162,7 @@ P95延迟41ms，每个服务2个副本，单个Pod配置1核CPU + 512Mi内存。
 - [MySQL监控](./docs/mysql-monitor.png)
 
 ### 后续规划
-- 引入配置热更新减少频繁重启
+- 引入热更新减少频繁重启
 - 转向Serverless
 
 ## 部署指南
@@ -192,14 +208,14 @@ kubectl apply -f <filename>
 ## 接入阿里云SLS
 - 创建2个服务和Apisix的Project，Apisix的Logstore名为request，其余两个服务都要创建的logstore分别是request、publish、subscribe、sql、core。
 - fluent bit配置按比例采集和Filter的RewriteTag，对不同的服务设置不同的Tag。
-- fluent bit创建2个OUTPUT配置两个服务的topics和topic_key（日志的type字段），topic_key的数据对应logstore，rdkafka.sasl.username对应project（这里只能写死或使用环境变量），Brokers是Project名称和私网地址的组合，端口号10011。
+- fluent bit创建2个OUTPUT配置两个服务的topics和topic_key（日志的type字段），topic_key的数据对应logstore，rdkafka.sasl.username对应project（这里只能写死或使用环境变量），Brokers是Project名称和私网地址的组合。
 - Apisix的日志在全局规则里配置SLS-logger即可，压测前要禁用该插件防止生成大量日志。
   
 ## 接入阿里云Opentelemetry
 - 连接私网的Opentelemetry地址。
   
 ### 部署Prometheus Agent
-- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（生产环境需要增加对集群的监控）。
+- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（由于当前项目生产环境需要增加对集群的监控）。
 - 用helm和prometheus.yaml文件安装Prometheus Agent。
 
 ## 本地开发环境搭建
