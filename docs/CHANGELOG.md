@@ -1,5 +1,5 @@
 <a name="v6.3.2"></a>
-## [v6.3.2(https://github.com/zhanshen02154/go-micro-service/compare/v6.3.1...v6.3.2) (2026-02-16)
+## [v6.3.2](https://github.com/zhanshen02154/go-micro-service/compare/v6.3.1...v6.3.2) (2026-02-16)
 
 ## 订单服务
 
