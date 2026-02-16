@@ -1,3 +1,22 @@
+<a name="v6.3.2"></a>
+## [v6.3.2(https://github.com/zhanshen02154/go-micro-service/compare/v6.3.1...v6.3.2) (2026-02-16)
+
+## 订单服务
+
+### Bug Fixes
+
+* **日志:** 移除不支持的日志级别
+
+### Performance Improvements
+
+* **日志:** GRPC请求时间阈值改为time.Duration
+
+## 商品服务
+
+### Performance Improvements
+
+* GRPC请求时间阈值改为time.Duration
+
 <a name="v6.3.1"></a>
 ## [v6.3.1](https://github.com/zhanshen02154/go-micro-service/compare/v6.3.0...v6.3.1) (2026-02-10)
 
