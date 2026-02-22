@@ -218,7 +218,7 @@ kubectl apply -f <filename>
 - 连接私网的Opentelemetry地址。
   
 ### 部署Prometheus Agent
-- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（由于当前项目生产环境需要增加对集群的监控）。
+- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（由于项目的K8S主节点配置较低ApiServer负荷过重暂时忽略集群监控，生产环境需要增加对集群的监控）。
 - 用helm和prometheus.yaml文件安装Prometheus Agent。
 
 ## 本地开发环境搭建
