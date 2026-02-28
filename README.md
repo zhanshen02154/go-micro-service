@@ -19,9 +19,9 @@
 ## 项目特点
 - 修改Go micro v4底层源码以满足实际需求。
 - 将事件驱动架构落地实现端到端交付。
-- 支付回调API接口P95响应时间从最初的1150ms降低到34ms。
+- 支付回调API接口P95响应时间从最初的1150ms降低到34ms[博客链接](https://juejin.cn/post/7604507125857337371)。
 - 可观测性基础设施由自建迁移到云服务，降低使用成本。
-- 实现配置去中心化，减少对Configmap的依赖。
+- 实现配置中心化，减少对Configmap的依赖。
 - 依托GitHub结合Jenkins流水线实现CI/CD。
 
 ## 各服务代码仓库及相关文档
@@ -218,7 +218,7 @@ kubectl apply -f <filename>
 - 连接私网的Opentelemetry地址。
   
 ### 部署Prometheus Agent
-- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（由于当前项目生产环境需要增加对集群的监控）。
+- 创建Prometheus的ConfigMap，配置Remote Write对接阿里云的云监控及Job（由于项目的K8S主节点配置较低ApiServer负荷过重暂时忽略集群监控，生产环境需要增加对集群的监控）。
 - 用helm和prometheus.yaml文件安装Prometheus Agent。
 
 ## 本地开发环境搭建
