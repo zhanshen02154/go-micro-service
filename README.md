@@ -60,6 +60,7 @@
 
 
 ### 各版本测试报告
+- [6.3.2负载测试报告](https://github.com/zhanshen02154/go-micro-service/issues/60)
 - [6.3.0负载测试报告](https://github.com/zhanshen02154/go-micro-service/issues/54)
 - [6.2.1负载测试报告](https://github.com/zhanshen02154/go-micro-service/issues/52)
 - [6.2.0负载测试报告](https://github.com/zhanshen02154/order/issues/173)
